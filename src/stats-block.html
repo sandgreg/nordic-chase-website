@@ -1,0 +1,84 @@
+<section class="nc-stats" aria-label="Race in numbers">
+<style>
+  .nc-stats {
+    --nc-olive: #2E3104; --nc-sage: #B8BC80; --nc-lime: #D6FF3F; --nc-pale: #FFFDC1; --nc-cream: #FEFFE9;
+    background: var(--nc-olive); color: var(--nc-cream);
+    font-family: "Schibsted Grotesk", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    box-sizing: border-box; width: 100vw; position: relative; left: 50%; margin-left: -50vw;
+    padding: clamp(28px, 5vw, 56px) clamp(16px, 5vw, 64px);
+  }
+  .nc-stats * { box-sizing: border-box; font-family: inherit; }
+  .nc-stats .nc-stats-inner { max-width: 1240px; margin: 0 auto; display: grid; gap: 28px; }
+  .nc-stats .nc-toggle { display: inline-flex; justify-self: start; padding: 4px !important; margin: 0 !important;
+    border: 1.5px solid var(--nc-sage); border-radius: 999px; gap: 4px; width: auto !important; }
+  .nc-stats .nc-toggle[hidden] { display: none; }
+  .nc-stats .nc-toggle button {
+    font-size: 15px !important; font-weight: 700 !important; letter-spacing: .06em; text-transform: uppercase;
+    line-height: 1 !important; padding: 11px 22px !important; margin: 0 !important; min-height: 0 !important; width: auto !important;
+    border: 0 !important; border-radius: 999px !important; box-shadow: none !important; cursor: pointer;
+    background: transparent !important; color: var(--nc-cream) !important; transition: background .2s, color .2s;
+  }
+  .nc-stats .nc-toggle button[aria-pressed="true"] { background: var(--nc-lime) !important; color: var(--nc-olive) !important; }
+  .nc-stats .nc-toggle button:focus-visible { outline: 2px solid var(--nc-lime); outline-offset: 3px; }
+  .nc-stats dl { margin: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; border-top: 1px solid rgba(184, 188, 128, .35); }
+  .nc-stats dl > div { padding: 18px 16px 0 0; border-right: 1px solid rgba(184, 188, 128, .35); }
+  .nc-stats dl > div + div { padding-left: 16px; }
+  .nc-stats dl > div:last-child { border-right: 0; }
+  .nc-stats dt { font-size: 13px; font-weight: 600; color: var(--nc-sage); margin: 0 0 6px; }
+  .nc-stats dd { margin: 0; font-size: clamp(30px, 3.6vw, 50px); font-weight: 800; line-height: 1; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums; color: var(--nc-cream); white-space: nowrap; }
+  .nc-stats dd small { font-size: .42em; font-weight: 700; letter-spacing: 0; margin-left: .2em; color: var(--nc-sage); }
+  @media (max-width: 860px) {
+    .nc-stats dl { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 22px; }
+    .nc-stats dl > div:nth-child(3n) { border-right: 0; }
+    .nc-stats dl > div:nth-child(3n + 1) { padding-left: 0; }
+  }
+  @media (max-width: 480px) {
+    .nc-stats dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nc-stats dl > div { border-right: 1px solid rgba(184, 188, 128, .35) !important; padding-left: 16px !important; }
+    .nc-stats dl > div:nth-child(2n) { border-right: 0 !important; }
+    .nc-stats dl > div:nth-child(2n + 1) { padding-left: 0 !important; }
+  }
+</style>
+<div class="nc-stats-inner">
+  <div class="nc-toggle" role="group" aria-label="Choose edition"{{toggle_hidden}}>
+    <button type="button" data-ed="road" aria-pressed="true">Road</button>
+    <button type="button" data-ed="gravel" aria-pressed="false">Gravel</button>
+  </div>
+  <dl>
+    <div><dt>Distance</dt><dd data-k="distance">{{s_distance}}</dd></div>
+    <div><dt>Elevation</dt><dd data-k="elevation">{{s_elevation}}</dd></div>
+    <div><dt>Highest point</dt><dd data-k="high">{{s_high}}</dd></div>
+    <div><dt>Ferries</dt><dd data-k="ferries">{{s_ferries}}</dd></div>
+    <div><dt>Cut-off</dt><dd data-k="cutoff">{{s_cutoff}}</dd></div>
+    <div><dt>Field</dt><dd data-k="field">{{s_field}}</dd></div>
+  </dl>
+</div>
+<script type="application/json" class="nc-data">{{data}}</script>
+<script>
+(function () {
+  var root = document.currentScript.closest('.nc-stats');
+  var D = JSON.parse(root.querySelector('.nc-data').textContent);
+  var buttons = root.querySelectorAll('.nc-toggle button');
+  // "6,400 m" -> big number, small unit
+  function setValue(dd, v) {
+    var i = v.indexOf(' '); dd.textContent = i < 0 ? v : v.slice(0, i);
+    if (i >= 0) { var u = document.createElement('small'); u.textContent = v.slice(i + 1); dd.appendChild(u); }
+  }
+  root.querySelectorAll('dd[data-k]').forEach(function (dd) { setValue(dd, dd.textContent); });
+  function show(ed) {
+    if (!D.stats[ed]) return;
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.ed === ed)); });
+    root.querySelectorAll('dd[data-k]').forEach(function (dd) { setValue(dd, D.stats[ed][dd.dataset.k]); });
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      show(b.dataset.ed);
+      // tell the other blocks on the page (route story) which edition to show
+      document.dispatchEvent(new CustomEvent('nc:edition', { detail: { edition: b.dataset.ed, from: 'stats' } }));
+    });
+  });
+  document.addEventListener('nc:edition', function (e) { if (e.detail && e.detail.from !== 'stats') show(e.detail.edition); });
+})();
+</script>
+</section>

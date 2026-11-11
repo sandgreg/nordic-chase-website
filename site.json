@@ -1,0 +1,6 @@
+{
+  "chases": ["cph-sto"],
+  "map_base_live": "https://sandgreg.github.io/maps/",
+  "map_base_preview": "../map-preview/",
+  "use_preview_map": true
+}
